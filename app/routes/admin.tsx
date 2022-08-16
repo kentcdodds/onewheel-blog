@@ -4,19 +4,35 @@ import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
 
 import { requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
-import { getNoteListItems } from "~/models/note.server";
+
+const sections = [
+  {
+    name: 'Customers'
+  },
+  {
+    name: 'Products'
+  },
+  {
+    name: 'Lists'
+  },
+  {
+    name: 'Templates'
+  },
+  {
+    name: 'Settings'
+  }
+]
 
 type LoaderData = {
-  noteListItems: Awaited<ReturnType<typeof getNoteListItems>>;
+  sections: Awaited<ReturnType<typeof sections>>;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  const userId = await requireUserId(request);
-  const noteListItems = await getNoteListItems({ userId });
-  return json<LoaderData>({ noteListItems });
+  // const userId = await requireUserId(request);
+  return json<LoaderData>({ sections });
 };
 
-export default function NotesPage() {
+export default function AdminPage() {
   const data = useLoaderData() as LoaderData;
   const user = useUser();
 
@@ -24,7 +40,7 @@ export default function NotesPage() {
     <div className="flex h-full min-h-screen flex-col">
       <header className="flex items-center justify-between bg-slate-800 p-4 text-white">
         <h1 className="text-3xl font-bold">
-          <Link to=".">Notes</Link>
+          <Link to=".">Clara</Link>
         </h1>
         <p>{user.email}</p>
         <Form action="/logout" method="post">
@@ -40,24 +56,24 @@ export default function NotesPage() {
       <main className="flex h-full bg-white">
         <div className="h-full w-80 border-r bg-gray-50">
           <Link to="new" className="block p-4 text-xl text-blue-500">
-            + New Note
+            + New
           </Link>
 
           <hr />
 
-          {data.noteListItems.length === 0 ? (
+          {data.sections.length === 0 ? (
             <p className="p-4">No notes yet</p>
           ) : (
             <ol>
-              {data.noteListItems.map((note) => (
-                <li key={note.id}>
+              {data.sections.map((section) => (
+                <li key={section.name}>
                   <NavLink
                     className={({ isActive }) =>
                       `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
                     }
-                    to={note.id}
+                    to={section.name}
                   >
-                    📝 {note.title}
+                    {section.name}
                   </NavLink>
                 </li>
               ))}
