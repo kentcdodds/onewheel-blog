@@ -1,34 +1,18 @@
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, Link, NavLink, Outlet, useLoaderData } from "@remix-run/react";
+import { getSections } from "~/models/sections.server";
 
-import { requireUserId } from "~/session.server";
+// import { requireUserId } from "~/session.server";
 import { useUser } from "~/utils";
 
-const sections = [
-  {
-    name: 'Customers'
-  },
-  {
-    name: 'Products'
-  },
-  {
-    name: 'Lists'
-  },
-  {
-    name: 'Templates'
-  },
-  {
-    name: 'Settings'
-  }
-]
 
 type LoaderData = {
-  sections: Awaited<ReturnType<typeof sections>>;
+  sections: Awaited<ReturnType<typeof getSections>>;
 };
 
 export const loader: LoaderFunction = async ({ request }) => {
-  // const userId = await requireUserId(request);
+  const sections = getSections();
   return json<LoaderData>({ sections });
 };
 
@@ -66,12 +50,12 @@ export default function AdminPage() {
           ) : (
             <ol>
               {data.sections.map((section) => (
-                <li key={section.name}>
+                <li key={section.path}>
                   <NavLink
                     className={({ isActive }) =>
                       `block border-b p-4 text-xl ${isActive ? "bg-white" : ""}`
                     }
-                    to={section.name}
+                    to={section.path}
                   >
                     {section.name}
                   </NavLink>
