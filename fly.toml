@@ -1,4 +1,4 @@
-app = "onewheel-blog-fl0t"
+app = "clara-backoffice"
 kill_signal = "SIGINT"
 kill_timeout = 5
 processes = [ ]
