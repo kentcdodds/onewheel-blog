@@ -102,7 +102,7 @@ jobs:
       - name: 🛠 Setup Database
         run: npx prisma migrate reset --force
         env: 
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: $DATABASE_URL
 
       - name: ⚙️ Build
         run: npm run build
