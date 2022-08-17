@@ -59,8 +59,9 @@ export const action: ActionFunction = async ({ request }) => {
       { status: 400 }
     );
   }
-
-  const user = await createUser(email, password);
+  const mobile = ''; // TODO
+  const firstName = ''; // TODO
+  const user = await createUser(email, password, mobile, firstName);
 
   return createUserSession({
     request,
