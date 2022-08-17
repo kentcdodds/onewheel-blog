@@ -81,7 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ENV PRINTING
-        run: echo DATABASE_URL ${{ secrets.DATABASE_URL }}
+        run: echo DATABASE_URL ${{ secrets.DATABASE_URL2 }}
 
       - name: 🛑 Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
