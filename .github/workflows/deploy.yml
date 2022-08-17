@@ -85,7 +85,7 @@ jobs:
         with:
           envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
           file_name: .env
-          fail_on_empty: false
+          fail_on_empty: true
 
       - name: 🛑 Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
