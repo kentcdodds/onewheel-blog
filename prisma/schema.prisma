@@ -1,10 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model CarmelaProduct {
+  id          String   @id @unique @db.VarChar(128)
+  name        String   @db.VarChar(128)
+  tags_names  String[]
+  slug        String
+  onsale      Boolean
+  price       Float
+  image       String
+  type        String
+  selected    String
+  text        String
+  weight      Float?
+  weight_type String?
+  imageBig    String?
+  salePrice   String?
+  instock     Boolean
+}
+
+model Message {
+  id               String   @unique @db.VarChar(200)
+  status           String   @db.VarChar(64)
+  type             String   @db.VarChar(64)
+  type_extra_info  String
+  timestamp        DateTime
+  updated_at       DateTime
+  from             String   @db.VarChar(64)
+  contactId        String
+  conversation     Json?
+  pricing          Json?
+  sessionId        String
+  state            String?
+  contextMessageId String?  @unique
+  User             User     @relation(fields: [contactId], references: [mobile])
+  Message          Message? @relation("MessageToMessage", fields: [contextMessageId], references: [id])
+  Session          Session  @relation(fields: [sessionId], references: [id])
+  other_Message    Message? @relation("MessageToMessage")
+}
+
+model Session {
+  id          String    @id @unique @db.VarChar(200)
+  start       DateTime  @default(now())
+  end         DateTime?
+  customer_id String    @db.VarChar(64)
+  is_active   Boolean   @default(true)
+  Message     Message[]
 }
 
 model User {
@@ -15,7 +62,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   password Password?
-  notes    Note[]
+  
+  mobile    String    @unique @db.VarChar(16)
+  firstName String    @db.VarChar(64)
+  lastName String?    @db.VarChar(64)
+  messages   Message[]
 }
 
 model Password {
@@ -23,25 +74,4 @@ model Password {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
-}
-
-model Note {
-  id    String @id @default(cuid())
-  title String
-  body  String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  userId String
-}
-
-model Post {
-  slug     String @id
-  title    String
-  markdown String
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
