@@ -76,52 +76,44 @@ jobs:
       - name: ⚡ Run vitest
         run: npm run test -- --coverage
 
-  cypress:
-    name: ⚫️ Cypress
-    runs-on: ubuntu-latest
-    steps:
-      - name: Make envfile
-        uses: SpicyPizza/create-envfile@v1.3
-        with:
-          envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          file_name: .env
-          directory: prisma
-          fail_on_empty: true
+  # cypress:
+  #   name: ⚫️ Cypress
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: 🛑 Cancel Previous Runs
+  #       uses: styfle/cancel-workflow-action@0.9.1
 
-      - name: 🛑 Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.9.1
+  #     - name: ⬇️ Checkout repo
+  #       uses: actions/checkout@v3
 
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v3
+  #     - name: 🏄 Copy test env vars
+  #       run: cp .env.example .env
 
-      - name: 🏄 Copy test env vars
-        run: cp .env.example .env
+  #     - name: ⎔ Setup node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: 16
 
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 16
+  #     - name: 📥 Download deps
+  #       uses: bahmutov/npm-install@v1
+  #       with:
+  #         useLockFile: false
 
-      - name: 📥 Download deps
-        uses: bahmutov/npm-install@v1
-        with:
-          useLockFile: false
+  #     - name: 🛠 Setup Database
+  #       run: pwd && ls && npx prisma migrate reset --force
+  #       env: 
+  #         DATABASE_URL: ${{ secrets.DATABSE_URL }}
 
-      - name: 🛠 Setup Database
-        run: pwd && ls && npx prisma migrate reset --force
-        env: 
-          DATABASE_URL: ${{ secrets.DATABSE_URL }}
+  #     - name: ⚙️ Build
+  #       run: npm run build
 
-      - name: ⚙️ Build
-        run: npm run build
-
-      - name: 🌳 Cypress run
-        uses: cypress-io/github-action@v3
-        with:
-          start: npm run start:mocks
-          wait-on: "http://localhost:8811"
-        env:
-          PORT: "8811"
+  #     - name: 🌳 Cypress run
+  #       uses: cypress-io/github-action@v3
+  #       with:
+  #         start: npm run start:mocks
+  #         wait-on: "http://localhost:8811"
+  #       env:
+  #         PORT: "8811"
 
   build:
     name: 🐳 Build
