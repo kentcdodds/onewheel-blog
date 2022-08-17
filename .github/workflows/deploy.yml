@@ -100,9 +100,9 @@ jobs:
           useLockFile: false
 
       - name: 🛠 Setup Database
-        run: npx prisma migrate reset --force
+        run: echo npx prisma migrate reset --force
         env: 
-          DATABASE_URL: ${{ secrets.FLY_API_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABSE_URL }}
 
       - name: ⚙️ Build
         run: npm run build
