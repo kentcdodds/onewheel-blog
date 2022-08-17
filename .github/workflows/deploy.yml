@@ -85,7 +85,7 @@ jobs:
         with:
           envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
           file_name: .env
-          directory: /home/runner/work/onewheel-blog/onewheel-blog
+          directory: ${GITHUB_WORKSPACE}
           fail_on_empty: true
 
       - name: 🛑 Cancel Previous Runs
