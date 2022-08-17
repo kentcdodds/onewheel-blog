@@ -17,7 +17,7 @@ export default function Products() {
 
     return (
         <div>
-            <h1>Products</h1>
+            <h1>Camrella Products</h1>
 
             <table className="table-auto">
                 <thead>
