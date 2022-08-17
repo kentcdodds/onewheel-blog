@@ -100,7 +100,7 @@ jobs:
           useLockFile: false
 
       - name: 🛠 Setup Database
-        run: echo npx prisma migrate reset --force
+        run: npx prisma migrate reset --force
         env: 
           DATABASE_URL: ${{ secrets.DATABSE_URL }}
 
