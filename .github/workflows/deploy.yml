@@ -83,13 +83,9 @@ jobs:
       - name: Make envfile
         uses: SpicyPizza/create-envfile@v1.3
         with:
-          envkey_DEBUG: true
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          envkey_DATABASE_URL: ${{ secrets.DATABASE_URL }}
           file_name: .env
           fail_on_empty: false
-          
-      - name: ENV PRINTING
-        run: echo DATABASE_URL ${{ secrets.DATABASE_URL2 }}
 
       - name: 🛑 Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.9.1
