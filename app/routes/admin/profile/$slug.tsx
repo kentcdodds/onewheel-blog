@@ -11,6 +11,13 @@ type LoaderData = {
     profile: any;
 };
 
+type ProductData = {
+    product_id: string,
+    name: string,
+    count: number,
+    order_percentage: number
+}
+
 export const loader: LoaderFunction = async ({ params }) => {
   const { slug } = params;
   invariant(slug, "slug is required");
@@ -47,7 +54,7 @@ export default function PostRoute() {
                         </tr>
                     </thead>
                     <tbody>
-                        {profile.map((product) => (
+                        {profile.map((product: ProductData) => (
                             <tr key={product.product_id}>
                                 <td>{product.product_id}</td>
                                 <td>{product.name}</td>
