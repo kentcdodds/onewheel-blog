@@ -16,8 +16,22 @@ export async function getProductsListings() {
   });
 }
 
-export async function getProducts() {
-  return prisma.carmelaProduct.findMany();
+export async function getProducts(ids: string[] = []) {
+  if (!ids || ids.length == 0) {
+    return prisma.carmelaProduct.findMany();
+  }
+
+  return await prisma.carmelaProduct.findMany({
+    where: {
+      id: { in: ids }
+    },
+    select: {
+      id: true,
+      image: true,
+      price: true,
+      name: true
+    }
+  });
 }
 
 export async function getProduct(id: string) {
