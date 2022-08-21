@@ -126,7 +126,7 @@ export default function Customers() {
                                 <td>{customer.email}</td>
                                 <td>{customer.mobile}</td>
                                 <td>{customer.firstName} {customer.lastName}</td>
-                                <td><Link to="/admin/profile/" className="text-blue-600">Profile</Link></td>
+                                <td><Link to={`/admin/profile/${customer.customer_id}`} className="text-blue-600">Profile</Link></td>
                             </tr>
                         ))}
                     </tbody>
