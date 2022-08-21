@@ -17,19 +17,20 @@ export async function getCustomer(email: string) {
   });
 }
 
-export async function getCarmellaCustomer(email: string) {
+export async function searchCustomer(email: string) {
   const res = await fetch(`https://${ENV.CLARA_PYTHON_API}/customers?email=${email}`);
   const data = await res.json();
   return data;
 }
 
 export async function createCustomer(customer: any) {
+  console.log(customer)
     return await prisma.customer.create({
       data: {
         customer_id: customer.id,
         email: customer.email,
-        mobile: customer.billing?.first_name,
-        firstName: customer.billing?.last_name,
+        mobile: customer.billing?.phone,
+        firstName: customer.billing?.first_name,
         lastName: customer.billing?.last_name
       }
     });
