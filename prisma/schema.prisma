@@ -75,3 +75,12 @@ model Password {
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   userId String @unique
 }
+
+model Customer {
+    id    String @id @default(cuid())
+    customer_id    Int @unique
+    email String @unique
+    mobile String @unique
+    firstName String
+    lastName String
+}
