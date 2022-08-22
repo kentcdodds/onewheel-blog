@@ -5,6 +5,8 @@ import { getProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
 import { getProduct } from "~/models/product.server";
 
+const placeholder = 'http://shorturl.at/mryUV'
+
 type LoaderData = {
     customer: any;
     orders: any;
@@ -51,7 +53,7 @@ export default function ProfileRoute() {
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
             {recommendation.map((product: ProductData) => (
                 <div key={product.product_id}>
-                    <img className="object-cover h-20" src={product.info.image} alt={product.info.image}></img>
+                    <img className="object-cover h-20" src={product.info?.image ?? placeholder} alt={product.name}></img>
                     <p>{product.name}</p>
                 </div>
             ))}
@@ -89,7 +91,7 @@ export default function ProfileRoute() {
                                 <td>{product.name}</td>
                                 <td>{product.count}</td>
                                 <td>{product.order_percentage}</td>
-                                {<td><img className="object-cover h-20" src={product.info.image} alt={product.info.image}></img></td>}
+                                {<td><img className="object-cover h-20" src={product.info?.image??placeholder} alt={product.name}></img></td>}
                             </tr>
                         ))}
                     </tbody>
