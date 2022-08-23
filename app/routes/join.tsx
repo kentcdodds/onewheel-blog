@@ -29,7 +29,7 @@ export const action: ActionFunction = async ({ request }) => {
   const formData = await request.formData();
   const email = formData.get("email");
   const password = formData.get("password");
-  const redirectTo = safeRedirect(formData.get("redirectTo"), "/");
+  const redirectTo = safeRedirect(formData.get("redirectTo"), "/admin");
 
   if (!validateEmail(email)) {
     return json<ActionData>(
@@ -59,7 +59,7 @@ export const action: ActionFunction = async ({ request }) => {
       { status: 400 }
     );
   }
-  const mobile = ''; // TODO
+  const mobile = '972555555555'; // TODO
   const firstName = ''; // TODO
   const user = await createUser(email, password, mobile, firstName);
 
@@ -163,7 +163,7 @@ export default function Join() {
               <Link
                 className="text-blue-500 underline"
                 to={{
-                  pathname: "/login",
+                  pathname: "/",
                   search: searchParams.toString(),
                 }}
               >

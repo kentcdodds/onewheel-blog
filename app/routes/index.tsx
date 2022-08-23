@@ -95,9 +95,9 @@ export default function LoginPage() {
       <div className="mx-auto w-full max-w-md px-8">
       
 
-        <h1 class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-black text-center">E-Clara</h1>
+        <h1 className="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-black text-center">E-Clara</h1>
 
-        <p class="text-lg font-normal text-gray-500 lg:text-xl dark:text-gray-400">Upgrade your online business with human-to-human personalized marketing 🌱</p>
+        <p className="text-lg font-normal text-gray-500 lg:text-xl dark:text-gray-400">Upgrade your online business with human-to-human personalized marketing 🌱</p>
         <div className="mb-10" />
         <Form method="post" className="space-y-6">
           <div>
