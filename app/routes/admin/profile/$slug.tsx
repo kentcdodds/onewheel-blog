@@ -5,7 +5,7 @@ import { getProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
 import { getProduct } from "~/models/product.server";
 
-const placeholder = 'http://shorturl.at/mryUV'
+const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 
 type LoaderData = {
     customer: any;
@@ -39,7 +39,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     // var endTime = performance.now();
     // console.log(`products fetch ${endTime - startTime} milliseconds`);
     
-    return json<LoaderData>({ customer: profile.customer, orders: profile.orders, profile: profile.profile, recommendation: profile.profile.slice(0, 15) });
+    return json<LoaderData>({ customer: profile.customer, orders: profile.orders, profile: profile.profile, recommendation: profile.profile.products.slice(0, 15) });
 };
 
 export default function ProfileRoute() {
@@ -69,7 +69,9 @@ export default function ProfileRoute() {
                 </Form>
             </div>
             <h2 className="my-6 text-2xl">Profile</h2>
-            <h2 className="my-6 text-l">Profile based on {orders.length} past orders</h2>
+            <img className="justify-center" src={profile.orders_profile_url} alt='orders profile'></img>
+
+            <h2 className="my-6 text-l font-bold">What products are most frequent in the {orders.length} past orders</h2>
 
             {orders.length == 0 ? (
                 <h1>No orders for this customers.</h1>
@@ -85,7 +87,7 @@ export default function ProfileRoute() {
                         </tr>
                     </thead>
                     <tbody>
-                        {profile.map((product: ProductData) => (
+                        {profile.products.map((product: ProductData) => (
                             <tr key={product.product_id}>
                                 <td>{product.product_id}</td>
                                 <td>{product.name}</td>
