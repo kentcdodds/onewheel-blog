@@ -1,49 +1,43 @@
 import type { LoaderFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useCatch, useLoaderData, useParams } from "@remix-run/react";
-import { getProfile } from "~/models/profile.server";
+import { CartItem, getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
-import { getProduct } from "~/models/product.server";
+import { getProduct, Product } from "~/models/product.server";
+import { cartItem } from '~/views/cart_item'
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 
 type LoaderData = {
     customer: any;
     orders: any;
-    profile: any;
-    recommendation: any;
+    products: Map<string, Product>;
+    profile: {
+        aggregate_products: ProductProfile[],
+        next_cart: CartItem[],
+        orders_profile: any
+    };
 };
-
-type ProductData = {
-    product_id: string;
-    name: string;
-    count: number;
-    order_percentage: number;
-    info: any;
-}
 
 export const loader: LoaderFunction = async ({ params }) => {
     const { slug } = params;
     invariant(slug, "slug is required");
-    const profile = await getProfile(slug);
+    const profileData = await getProfile(slug);
 
-    if (!profile) {
+    if (!profileData) {
         throw new Response("Not Found", { status: 404 });
     }
 
-    // var startTime = performance.now()
-    // for (let i = 0; i < profile.profile.length; i++) {
-    //     const product = await getProduct(profile.profile[i].product_id.toString())
-    //     profile.profile[i].image = product?.image ?? "";
-    // }
-    // var endTime = performance.now();
-    // console.log(`products fetch ${endTime - startTime} milliseconds`);
-    
-    return json<LoaderData>({ customer: profile.customer, orders: profile.orders, profile: profile.profile, recommendation: profile.profile.products.slice(0, 15) });
+    return json<LoaderData>({ 
+        customer: profileData.customer, 
+        orders: profileData.orders, 
+        products: profileData.products,
+        profile: profileData.profile 
+    });
 };
 
 export default function ProfileRoute() {
-    const { customer, orders, profile, recommendation } = useLoaderData() as LoaderData;
+    const { customer, orders, products, profile } = useLoaderData() as LoaderData;
     return (
         <main className="mx-auto max-w-4xl">
             <h1 className="my-6 text-center text-3xl">{customer.email}</h1>
@@ -51,10 +45,12 @@ export default function ProfileRoute() {
 
             <h2 className="my-6 text-2xl">Next cart recommendation:</h2>
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
-            {recommendation.map((product: ProductData) => (
-                <div key={product.product_id}>
-                    <img className="object-cover h-20" src={product.info?.image ?? placeholder} alt={product.name}></img>
-                    <p>{product.name}</p>
+            {profile.next_cart.map((cartItem) => (
+                <div key={cartItem.product_id}>
+                    <img className="object-cover h-20" 
+                    src={products[cartItem.product_id]?.image ?? placeholder} 
+                    alt={cartItem.name}></img>
+                    <p>{cartItem.name}</p>
                 </div>
             ))}
             </div>
@@ -69,11 +65,14 @@ export default function ProfileRoute() {
                 </Form>
             </div>
             <h2 className="my-6 text-2xl">Profile</h2>
-            <img className="justify-center" src={profile.orders_profile_url} alt='orders profile'></img>
+            {profile.orders_profile?.plots.map((plot_url) => (
+                <img key={plot_url} className="justify-center" src={plot_url} alt={plot_url}></img>            
+            ))}
+
 
             <h2 className="my-6 text-l font-bold">What products are most frequent in the {orders.length} past orders</h2>
 
-            {orders.length == 0 ? (
+            {/* {orders.length == 0 ? (
                 <h1>No orders for this customers.</h1>
             ) : (
                 <table className="table-auto">
@@ -87,7 +86,7 @@ export default function ProfileRoute() {
                         </tr>
                     </thead>
                     <tbody>
-                        {profile.products.map((product: ProductData) => (
+                        {profile.products.map((product: ProductProfile) => (
                             <tr key={product.product_id}>
                                 <td>{product.product_id}</td>
                                 <td>{product.name}</td>
@@ -98,7 +97,7 @@ export default function ProfileRoute() {
                         ))}
                     </tbody>
                 </table>
-            )}
+            )} */}
         </main>
     );
 }
