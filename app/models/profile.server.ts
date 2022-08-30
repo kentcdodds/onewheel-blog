@@ -2,8 +2,8 @@ import { json } from "@remix-run/node";
 
 
 export interface OrdersProfile {
-  last_order_date: string;
-  next_order_date: string;
+  last_order_date: Date;
+  next_order_date: Date;
   next_order_day:  string;
   broadcast_time:  number;
   mean:            number;

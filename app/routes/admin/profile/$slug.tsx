@@ -15,7 +15,7 @@ type LoaderData = {
     profile: {
         aggregate_products: ProductProfile[],
         next_cart: CartItem[],
-        orders_profile: any
+        orders_profile: OrdersProfile
     };
 };
 
@@ -54,8 +54,8 @@ export default function ProfileRoute() {
                 </div>
             ))}
             </div>
-
-            <p>Next Order suggestion: 01/01/2020</p>
+            
+            <p>Next Order suggestion: {profile.orders_profile.next_order_date.toLocaleDateString}</p>
             
             <div className="flex justify-center">
                 <Form method="post" className="space-y-6">
@@ -65,7 +65,7 @@ export default function ProfileRoute() {
                 </Form>
             </div>
             <h2 className="my-6 text-2xl">Profile</h2>
-            {profile.orders_profile?.plots.map((plot_url) => (
+            {profile.orders_profile?.plots.map((plot_url: string) => (
                 <img key={plot_url} className="justify-center" src={plot_url} alt={plot_url}></img>            
             ))}
 
