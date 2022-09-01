@@ -1,16 +1,30 @@
-import type { LoaderFunction } from "@remix-run/node";
+import { LoaderFunction, redirect } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useCatch, useLoaderData, useParams } from "@remix-run/react";
+import { Form, useCatch, useLoaderData, useParams, useTransition } from "@remix-run/react";
 import { CartItem, getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
 import { getProduct, Product } from "~/models/product.server";
 import { cartItem } from '~/views/cart_item'
+import { useState } from "react";
+// import DatePicker from 'sassy-datepicker';
+// import DatePicker from "react-datepicker";
+// import "react-datepicker/dist/react-datepicker.css";
+import { parseISO } from 'date-fns'
+
+
+import dayjs from "dayjs";
+import 'dayjs/locale/en-il'
+import TextField from '@mui/material/TextField';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import AdminError from "../error";
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
+dayjs.locale('en-il')
 
 type LoaderData = {
     customer: any;
-    orders: any;
     products: Map<string, Product>;
     profile: {
         aggregate_products: ProductProfile[],
@@ -25,19 +39,29 @@ export const loader: LoaderFunction = async ({ params }) => {
     const profileData = await getProfile(slug);
 
     if (!profileData) {
-        throw new Response("Not Found", { status: 404 });
+        return redirect('/404')
     }
 
     return json<LoaderData>({ 
         customer: profileData.customer, 
-        orders: profileData.orders, 
         products: profileData.products,
         profile: profileData.profile 
     });
 };
 
-export default function ProfileRoute() {
-    const { customer, orders, products, profile } = useLoaderData() as LoaderData;
+// function onClick(customer, orders) {
+//     //do something
+// }
+
+export default function ProfileRoute() {    
+    const { customer, products, profile } = useLoaderData() as LoaderData;
+    const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
+    // const transition = useTransition()
+
+    // if(transition.state === "loading") {
+    //     return <div>Loading...</div>
+    // }
+
     return (
         <main className="mx-auto max-w-4xl">
             <h1 className="my-6 text-center text-3xl">{customer.email}</h1>
@@ -55,8 +79,14 @@ export default function ProfileRoute() {
             ))}
             </div>
             
-            <p>Next Order suggestion: {profile.orders_profile.next_order_date.toLocaleDateString}</p>
-            
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DatePicker
+                    label="Next order suggestion"
+                    value={nextOrderDate}
+                    onChange={newDate => { setNextOrderDate(newDate)}}
+                    renderInput={(params) => <TextField {...params} />}
+                />
+            </LocalizationProvider>
             <div className="flex justify-center">
                 <Form method="post" className="space-y-6">
                     <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
@@ -70,35 +100,50 @@ export default function ProfileRoute() {
             ))}
 
 
-            <h2 className="my-6 text-l font-bold">What products are most frequent in the {orders.length} past orders</h2>
+            <h2 className="my-6 text-l font-bold">Products {customer.first_name} purchase</h2>
 
-            {/* {orders.length == 0 ? (
+            {profile.aggregate_products.length == 0 ? (
                 <h1>No orders for this customers.</h1>
             ) : (
                 <table className="table-auto">
                     <thead>
                         <tr>
                             <th>Id</th>
-                            <th>name</th>
-                            <th>count</th>
                             <th>%</th>
+                            <th>Name</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>Mean</th>
                             <th>Image</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {profile.products.map((product: ProductProfile) => (
+                        {profile.aggregate_products.map((product: ProductProfile) => (
                             <tr key={product.product_id}>
                                 <td>{product.product_id}</td>
-                                <td>{product.name}</td>
-                                <td>{product.count}</td>
-                                <td>{product.order_percentage}</td>
-                                {<td><img className="object-cover h-20" src={product.info?.image??placeholder} alt={product.name}></img></td>}
+                                <td>{product["%"]}% (from all orders)</td>
+                                <td className="text-center">{product.name}</td>
+                                <td>{product.min} {product.unit}</td>
+                                <td>{product.max} {product.unit}</td>
+                                <td>{product.mean.toFixed(2)} {product.unit}</td>
+                                {<td><img className="object-cover h-20" src={products[product.product_id]?.image ?? placeholder} alt={product.name}></img></td>}
                             </tr>
                         ))}
                     </tbody>
                 </table>
-            )} */}
+            )}
         </main>
+    );
+}
+
+export function ErrorBoundary({ error }: { error: Error }) {
+    console.error(error);
+    return (
+        <AdminError error={error}/>
+    //   <div>
+    //     <p>Ooops.... We have an error. Be sure it will be fixed soon 🚀</p>
+    //     {error?.message}
+    //   </div>
     );
 }
 export function CatchBoundary() {
@@ -111,5 +156,15 @@ export function CatchBoundary() {
             </div>
         );
     }
-    throw new Error(`Unsupported thrown response status code: ${caught.status}`);
+    // throw new Error(`Unsupported thrown response status code: ${caught.status}`);
 }
+
+
+// function SellItem({cartItem, products}) {
+//     return (<div key={cartItem.product_id}>
+//         <img className="object-cover h-20" 
+//         src={products[cartItem.product_id]?.image ?? placeholder} 
+//         alt={cartItem.name}></img>
+//         <p>{cartItem.name}</p>
+//     </div>)
+// }

@@ -34,6 +34,9 @@ export interface CartItem {
 
 export async function getProfile(id: string) {
   const res = await fetch(`${ENV.CLARA_PYTHON_API}/customers/profile/${id}`);
+  if (res.status != 200) {
+    throw new Error(`server error ${res.status}`)
+  }
   const data = await res.json();
   console.log(data)
   return data;

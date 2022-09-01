@@ -19,6 +19,9 @@ export async function getCustomer(email: string) {
 
 export async function searchCustomer(email: string) {
   const res = await fetch(`${ENV.CLARA_PYTHON_API}/customers?email=${email}`);
+  if (res.status != 200) {
+    throw new Error(`server error ${res.status}`)
+  }
   const data = await res.json();
   return data;
 }
