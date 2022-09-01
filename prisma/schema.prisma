@@ -15,14 +15,16 @@ model CarmelaProduct {
   onsale      Boolean
   price       Float
   image       String
-  type        String
+  unit_type   String
   selected    String
   text        String
   weight      Float?
   weight_type String?
-  imageBig    String?
   salePrice   String?
   instock     Boolean
+  categories Json
+  related_ids String[]
+  status String
 }
 
 model Message {
