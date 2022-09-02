@@ -7,15 +7,16 @@ CREATE TABLE "CarmelaProduct" (
     "onsale" BOOLEAN NOT NULL,
     "price" DOUBLE PRECISION NOT NULL,
     "image" TEXT NOT NULL,
-    "type" TEXT NOT NULL,
+    "unit_type" TEXT NOT NULL,
     "selected" TEXT NOT NULL,
     "text" TEXT NOT NULL,
     "weight" DOUBLE PRECISION,
     "weight_type" TEXT,
-    "imageBig" TEXT,
     "salePrice" TEXT,
-    "description" TEXT NOT NULL,
     "instock" BOOLEAN NOT NULL,
+    "categories" JSONB NOT NULL,
+    "related_ids" TEXT[],
+    "status" TEXT NOT NULL,
 
     CONSTRAINT "CarmelaProduct_pkey" PRIMARY KEY ("id")
 );
@@ -67,6 +68,18 @@ CREATE TABLE "Password" (
     "userId" TEXT NOT NULL
 );
 
+-- CreateTable
+CREATE TABLE "Customer" (
+    "id" TEXT NOT NULL,
+    "customer_id" INTEGER NOT NULL,
+    "email" TEXT NOT NULL,
+    "mobile" TEXT NOT NULL,
+    "firstName" TEXT NOT NULL,
+    "lastName" TEXT NOT NULL,
+
+    CONSTRAINT "Customer_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "CarmelaProduct_id_key" ON "CarmelaProduct"("id");
 
@@ -87,6 +100,15 @@ CREATE UNIQUE INDEX "User_mobile_key" ON "User"("mobile");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Password_userId_key" ON "Password"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_customer_id_key" ON "Customer"("customer_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_email_key" ON "Customer"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Customer_mobile_key" ON "Customer"("mobile");
 
 -- AddForeignKey
 ALTER TABLE "Message" ADD CONSTRAINT "Message_contactId_fkey" FOREIGN KEY ("contactId") REFERENCES "User"("mobile") ON DELETE RESTRICT ON UPDATE CASCADE;

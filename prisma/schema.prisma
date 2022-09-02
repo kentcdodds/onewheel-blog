@@ -10,7 +10,7 @@ datasource db {
 model CarmelaProduct {
   id          String   @id @unique @db.VarChar(128)
   name        String   @db.VarChar(128)
-  tags_names  String[]
+  tags_names  Json
   slug        String
   onsale      Boolean
   price       Float
