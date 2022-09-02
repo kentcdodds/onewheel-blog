@@ -12,7 +12,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import Input from '@mui/material/Input';
 import InputLabel from '@mui/material/InputLabel';
 import IconButton from '@mui/material/IconButton';
-
+import QueryStatsIcon from '@mui/icons-material/QueryStats';
 // import DatePicker from 'sassy-datepicker';
 // import DatePicker from "react-datepicker";
 // import "react-datepicker/dist/react-datepicker.css";
@@ -33,7 +33,7 @@ dayjs.locale('en-il')
 
 type LoaderData = {
     customer: any;
-    products: { [key: string]: Product};
+    products: { [key: string]: Product };
     profile: {
         aggregate_products: ProductProfile[],
         next_cart: CartItem[],
@@ -50,10 +50,10 @@ export const loader: LoaderFunction = async ({ params }) => {
         return redirect('/404')
     }
 
-    return json<LoaderData>({ 
-        customer: profileData.customer, 
+    return json<LoaderData>({
+        customer: profileData.customer,
         products: profileData.products,
-        profile: profileData.profile 
+        profile: profileData.profile
     });
 };
 
@@ -61,7 +61,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 //     //do something
 // }
 
-export default function ProfileRoute() {    
+export default function ProfileRoute() {
     const { customer, products, profile } = useLoaderData() as LoaderData;
     const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
     // const transition = useTransition()
@@ -77,18 +77,18 @@ export default function ProfileRoute() {
 
             <h2 className="my-6 text-2xl">Next cart recommendation:</h2>
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
-            {profile.next_cart.map((cartItem) => (
-                <div key={cartItem.product_id}>
-                    <CartItemView cartItem={cartItem} product={products[cartItem.product_id]}/>
-                </div>
-            ))}
+                {profile.next_cart.map((cartItem) => (
+                    <div key={cartItem.product_id}>
+                        <CartItemView cartItem={cartItem} product={products[cartItem.product_id]} />
+                    </div>
+                ))}
             </div>
-            
+
             <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DatePicker
                     label="Next order suggestion"
                     value={nextOrderDate}
-                    onChange={newDate => { newDate && setNextOrderDate(newDate)}}
+                    onChange={newDate => { newDate && setNextOrderDate(newDate) }}
                     renderInput={(params) => <TextField {...params} />}
                 />
             </LocalizationProvider>
@@ -101,7 +101,7 @@ export default function ProfileRoute() {
             </div>
             <h2 className="my-6 text-2xl">Profile</h2>
             {profile.orders_profile?.plots.map((plot_url: string) => (
-                <img key={plot_url} className="justify-center" src={plot_url} alt={plot_url}></img>            
+                <img key={plot_url} className="justify-center" src={plot_url} alt={plot_url}></img>
             ))}
 
 
@@ -144,11 +144,11 @@ export default function ProfileRoute() {
 export function ErrorBoundary({ error }: { error: Error }) {
     console.error(error);
     return (
-        <AdminError error={error}/>
-    //   <div>
-    //     <p>Ooops.... We have an error. Be sure it will be fixed soon 🚀</p>
-    //     {error?.message}
-    //   </div>
+        <AdminError error={error} />
+        //   <div>
+        //     <p>Ooops.... We have an error. Be sure it will be fixed soon 🚀</p>
+        //     {error?.message}
+        //   </div>
     );
 }
 export function CatchBoundary() {
@@ -165,29 +165,32 @@ export function CatchBoundary() {
 }
 
 
-function CartItemView({cartItem, product} : {cartItem: CartItem, product: Product}) {
+function CartItemView({ cartItem, product }: { cartItem: CartItem, product: Product }) {
     const delta: number = cartItem.product_unit == 'unit' ? 1 : 0.5
     const unit_string = cartItem.product_unit == 'unit' ? 'יח׳' : 'ק״ג'
     const [quantityString, setQuantityString] = useState(`${unit_string} ${cartItem.quantity}`);
 
     function updateQuantity(value: number) {
-        cartItem.quantity += value
+        cartItem.quantity = Math.min(0, cartItem.quantity + value)
         setQuantityString(`${unit_string} ${cartItem.quantity}`)
     }
     return (
-    <div>
-        <Stack spacing={0} direction="column" alignItems="center">
-            <img className="object-cover h-40" 
-            src={product?.image ?? placeholder} 
-            alt={cartItem.name}></img>
-            <Box sx={{ fontWeight: 'bold', m: 1 }}>{cartItem.name} {cartItem.product_id}</Box>
-            <Box sx={{ fontWeight: 'light', m: 1 }}>{product?.weight_type} / ֿ{product?.price}</Box>
+        <div>
+            <Stack spacing={0} direction="column" alignItems="center">
+                <img className="object-cover h-40"
+                    src={product?.image ?? placeholder}
+                    alt={cartItem.name}></img>
+                <Box sx={{ fontWeight: 'bold', m: 1 }} textAlign='center'>
+                    <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><QueryStatsIcon /></IconButton>
+                    {cartItem.name} {cartItem.product_id}
+                </Box>
+                <Box sx={{ fontWeight: 'light', m: 1 }}>{product?.weight_type} / ֿ{product?.price}</Box>
 
-            <Stack spacing={1} direction="row" alignItems={"center"}>
-                <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><RemoveIcon /></IconButton>
-                <Input readOnly value={quantityString} inputProps={{min: 0, style: { textAlign: 'center' }}}/>
-                <IconButton color="success" aria-label="plus 1" onClick={() => updateQuantity(+delta)}><AddIcon /></IconButton>
+                <Stack spacing={1} direction="row" alignItems={"center"}>
+                    <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><RemoveIcon /></IconButton>
+                    <Input readOnly value={quantityString} inputProps={{ min: 0, style: { textAlign: 'center' } }} />
+                    <IconButton color="success" aria-label="plus 1" onClick={() => updateQuantity(+delta)}><AddIcon /></IconButton>
+                </Stack>
             </Stack>
-        </Stack>
-    </div>)
+        </div>)
 }
