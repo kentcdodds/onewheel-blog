@@ -4,7 +4,6 @@ import { Form, useCatch, useLoaderData, useParams, useTransition } from "@remix-
 import { CartItem, getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
 import { getProduct, Product } from "~/models/product.server";
-import { cartItem } from '~/views/cart_item'
 import { useState } from "react";
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
@@ -167,7 +166,14 @@ export function CatchBoundary() {
 
 
 function CartItemView({cartItem, product} : {cartItem: CartItem, product: Product}) {
-    console.log(product)
+    const delta: number = cartItem.product_unit == 'unit' ? 1 : 0.5
+    const unit_string = cartItem.product_unit == 'unit' ? 'יח׳' : 'ק״ג'
+    const [quantityString, setQuantityString] = useState(`${unit_string} ${cartItem.quantity}`);
+
+    function updateQuantity(value: number) {
+        cartItem.quantity += value
+        setQuantityString(`${unit_string} ${cartItem.quantity}`)
+    }
     return (
     <div>
         <Stack spacing={0} direction="column" alignItems="center">
@@ -178,9 +184,9 @@ function CartItemView({cartItem, product} : {cartItem: CartItem, product: Produc
             <Box sx={{ fontWeight: 'light', m: 1 }}>{product?.weight_type} / ֿ{product?.price}</Box>
 
             <Stack spacing={1} direction="row" alignItems={"center"}>
-                <IconButton color="success" aria-label="minus 1"><RemoveIcon /></IconButton>
-                <Input readOnly defaultValue={`${cartItem.product_unit == 'unit' ? 'יח׳' : 'ק״ג'} ${cartItem.quantity}`} inputProps={{min: 0, style: { textAlign: 'center' }}}/>
-                <IconButton color="success" aria-label="plus 1"><AddIcon /></IconButton>
+                <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><RemoveIcon /></IconButton>
+                <Input readOnly value={quantityString} inputProps={{min: 0, style: { textAlign: 'center' }}}/>
+                <IconButton color="success" aria-label="plus 1" onClick={() => updateQuantity(+delta)}><AddIcon /></IconButton>
             </Stack>
         </Stack>
     </div>)
