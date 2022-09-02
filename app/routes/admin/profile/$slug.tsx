@@ -6,6 +6,14 @@ import invariant from "tiny-invariant";
 import { getProduct, Product } from "~/models/product.server";
 import { cartItem } from '~/views/cart_item'
 import { useState } from "react";
+import Stack from '@mui/material/Stack';
+import Button from '@mui/material/Button';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
+import Input from '@mui/material/Input';
+import InputLabel from '@mui/material/InputLabel';
+import IconButton from '@mui/material/IconButton';
+
 // import DatePicker from 'sassy-datepicker';
 // import DatePicker from "react-datepicker";
 // import "react-datepicker/dist/react-datepicker.css";
@@ -19,13 +27,14 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import AdminError from "../error";
+import Box from "@mui/system/Box";
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 dayjs.locale('en-il')
 
 type LoaderData = {
     customer: any;
-    products: Map<string, Product>;
+    products: { [key: string]: Product};
     profile: {
         aggregate_products: ProductProfile[],
         next_cart: CartItem[],
@@ -71,10 +80,7 @@ export default function ProfileRoute() {
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
             {profile.next_cart.map((cartItem) => (
                 <div key={cartItem.product_id}>
-                    <img className="object-cover h-20" 
-                    src={products[cartItem.product_id]?.image ?? placeholder} 
-                    alt={cartItem.name}></img>
-                    <p>{cartItem.name}</p>
+                    <CartItemView cartItem={cartItem} product={products[cartItem.product_id]}/>
                 </div>
             ))}
             </div>
@@ -83,7 +89,7 @@ export default function ProfileRoute() {
                 <DatePicker
                     label="Next order suggestion"
                     value={nextOrderDate}
-                    onChange={newDate => { setNextOrderDate(newDate)}}
+                    onChange={newDate => { newDate && setNextOrderDate(newDate)}}
                     renderInput={(params) => <TextField {...params} />}
                 />
             </LocalizationProvider>
@@ -160,11 +166,22 @@ export function CatchBoundary() {
 }
 
 
-// function SellItem({cartItem, products}) {
-//     return (<div key={cartItem.product_id}>
-//         <img className="object-cover h-20" 
-//         src={products[cartItem.product_id]?.image ?? placeholder} 
-//         alt={cartItem.name}></img>
-//         <p>{cartItem.name}</p>
-//     </div>)
-// }
+function CartItemView({cartItem, product} : {cartItem: CartItem, product: Product}) {
+    console.log(product)
+    return (
+    <div>
+        <Stack spacing={0} direction="column" alignItems="center">
+            <img className="object-cover h-40" 
+            src={product?.image ?? placeholder} 
+            alt={cartItem.name}></img>
+            <Box sx={{ fontWeight: 'bold', m: 1 }}>{cartItem.name} {cartItem.product_id}</Box>
+            <Box sx={{ fontWeight: 'light', m: 1 }}>{product?.weight_type} / ֿ{product?.price}</Box>
+
+            <Stack spacing={1} direction="row" alignItems={"center"}>
+                <IconButton color="success" aria-label="minus 1"><RemoveIcon /></IconButton>
+                <Input readOnly defaultValue={`${cartItem.product_unit == 'unit' ? 'יח׳' : 'ק״ג'} ${cartItem.quantity}`} inputProps={{min: 0, style: { textAlign: 'center' }}}/>
+                <IconButton color="success" aria-label="plus 1"><AddIcon /></IconButton>
+            </Stack>
+        </Stack>
+    </div>)
+}

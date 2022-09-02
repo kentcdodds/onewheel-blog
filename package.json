@@ -32,6 +32,8 @@
     "/public/build"
   ],
   "dependencies": {
+    "@mui/icons-material": "^5.10.3",
+    "@mui/material": "^5.10.3",
     "@mui/x-date-pickers": "^5.0.0-beta.7",
     "@prisma/client": "^4.2.1",
     "@remix-run/node": "^1.4.3",
