@@ -38,6 +38,5 @@ export async function getProfile(id: string) {
     throw new Error(`server error ${res.status}`)
   }
   const data = await res.json();
-  console.log(data)
   return data;
 }
