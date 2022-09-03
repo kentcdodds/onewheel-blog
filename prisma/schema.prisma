@@ -11,11 +11,14 @@ model OrderSuggestion {
   id String @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  suggestedDate DateTime
 
-  customer   Customer @relation(fields: [customerId], references: [customerId])
-  customerId Int      @unique
+  customer   Customer @relation(fields: [customerMobile], references: [mobile])
+  customerMobile String      
 
   cartItems CartItem[]
+
+  isActive Boolean
 }
 
 model CartItem {
@@ -23,11 +26,11 @@ model CartItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  productId String @unique @db.VarChar(128)
+  product_id String @db.VarChar(128)
   name      String @db.VarChar(128)
-  unit_type String @db.VarChar(64)
+  product_unit String @db.VarChar(64)
   quantity  Float
-  
+
   order   OrderSuggestion @relation(fields: [orderId], references: [id])
   orderId String
 }

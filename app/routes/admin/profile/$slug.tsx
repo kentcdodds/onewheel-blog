@@ -1,4 +1,4 @@
-import { LoaderFunction, redirect } from "@remix-run/node";
+import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { Form, useCatch, useLoaderData, useParams, useTransition } from "@remix-run/react";
 import { CartItem, getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
@@ -30,30 +30,19 @@ import Box from "@mui/system/Box";
 // import { LazyLoadImage, trackWindowScroll }
 //     from 'react-lazy-load-image-component';
 import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
+import { createOrder, getOrderForProfile, OrderSuggestion } from "~/models/orders_suggestions.server";
+import { profile } from "console";
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 dayjs.locale('en-il')
 
-// interface ValueMapping {
-//     [index: string]: string
-// }
-
-
-// export abstract class ProductProfileViewModel {
-
-//     // public props: ValueMapping[] = [];
-
-//     static test(): ValueMapping[] {
-//     }
-// }
 type LoaderData = {
-    customer: any;
     products: { [key: string]: Product };
     profile: {
         aggregate_products: { [key: string]: ProductProfile },
-        next_cart: CartItem[],
         orders_profile: OrdersProfile
     };
+    order?: OrderSuggestion;
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -65,10 +54,16 @@ export const loader: LoaderFunction = async ({ params }) => {
         return redirect('/404')
     }
 
+
+    const order = await getOrderForProfile(profileData.customer, 
+        profileData.profile.next_cart, 
+        parseISO(profileData.profile.orders_profile.next_order_date))
+        
+
     return json<LoaderData>({
-        customer: profileData.customer,
         products: profileData.products,
-        profile: profileData.profile
+        profile: profileData.profile,
+        order: order
     });
 };
 
@@ -77,8 +72,8 @@ export const loader: LoaderFunction = async ({ params }) => {
 // }
 
 export default function ProfileRoute() {
-    const { customer, products, profile } = useLoaderData() as LoaderData;
-    console.log(profile.aggregate_products)
+    const { products, profile, order } = useLoaderData() as LoaderData;
+    const customer = order?.customer;
     const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
     // const transition = useTransition()
 
@@ -88,12 +83,13 @@ export default function ProfileRoute() {
 
     return (
         <main className="mx-auto max-w-4xl">
-            <h1 className="my-6 text-center text-3xl">{customer.email}</h1>
-            <h2 className="my-6 text-center text-2xl border-b-2">{customer.first_name} {customer.last_name} {customer.billing?.phone}</h2>
+            <h1 className="my-6 text-center text-3xl">{customer?.email}</h1>
+            <h2 className="my-6 text-center text-2xl border-b-2">{customer?.firstName} {customer?.lastName} {customer.mobile}</h2>
 
             <h2 className="my-6 text-2xl">Next cart recommendation:</h2>
+            <p>Order id {order?.id}</p>
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
-                {profile.next_cart.map((cartItem) => (
+                {order?.cartItems.map((cartItem) => (
                     <div key={cartItem.product_id}>
                         <CartItemView
                             cartItem={cartItem}
@@ -124,7 +120,7 @@ export default function ProfileRoute() {
             ))}
 
 
-            <h2 className="my-6 text-l font-bold">Products {customer.first_name} purchase</h2>
+            <h2 className="my-6 text-l font-bold">Products {customer?.firstName} purchase</h2>
 
             {Object.keys(profile.aggregate_products).length == 0 ? (
                 <h1>No orders for this customers.</h1>
@@ -244,3 +240,43 @@ function CartItemView({ cartItem, product, productProfile }: { cartItem: CartIte
         </Box>
     )
 }
+
+
+// interface ActionData {
+//     errors?: {
+//         email?: string;
+//     };
+// }
+
+// export const action: ActionFunction = async ({ request }) => {
+//     const formData = await request.formData();
+//     const email = formData.get("email");
+
+//     if (!validateEmail(email)) {
+//         return json<ActionData>(
+//             { errors: { email: "Email is invalid" } },
+//             { status: 400 }
+//         );
+//     }
+
+//     if (await getCustomer(email) != undefined) {
+//         return json<ActionData>(
+//             { errors: { email: "Customer was already added" } },
+//             { status: 400 }
+//         );
+//     }
+
+
+//     const customers = await searchCustomer(email)
+
+//     if (!customers || customers.length == 0) {
+//         return json<ActionData>(
+//             { errors: { email: `Invalid customer for email ${email}` } },
+//             { status: 400 }
+//         );
+//     }
+
+    
+//     await createCustomer(customers[0]);
+//     return redirect('admin/customers');
+// };

@@ -1,4 +1,6 @@
+import { CarmelaProduct, CartItem } from "@prisma/client";
 import { json } from "@remix-run/node";
+import { createOrder } from "./orders_suggestions.server";
 
 
 export interface OrdersProfile {
@@ -23,20 +25,11 @@ export interface ProductProfile {
   unit:       string;
 }
 
-export interface CartItem {
-  product_id:   string;
-  name:         string;
-  product_unit: string;
-  quantity:     number;
-}
-
-
 
 export async function getProfile(id: string) {
   const res = await fetch(`${ENV.CLARA_PYTHON_API}/customers/profile/${id}`);
   if (res.status != 200) {
     throw new Error(`server error ${res.status}`)
   }
-  const data = await res.json();
-  return data;
+  return res.json();
 }

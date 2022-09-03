@@ -1,4 +1,4 @@
-import { Customer, Prisma } from "@prisma/client";
+import { CartItem, Customer, Prisma } from "@prisma/client";
 import { json } from "@remix-run/node";
 import { prisma } from "~/db.server";
 import Customers from "~/routes/admin/customers";
@@ -38,3 +38,7 @@ export async function createCustomer(customer: any) {
       }
     });
 }
+
+// export async function createOrder(customer: Customer, cartItems: CartItem[], suggestedDate: Date) {
+
+// }
