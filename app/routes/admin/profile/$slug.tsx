@@ -27,15 +27,30 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import AdminError from "../error";
 import Box from "@mui/system/Box";
+import { LazyLoadImage, trackWindowScroll }
+    from 'react-lazy-load-image-component';
+import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 dayjs.locale('en-il')
 
+// interface ValueMapping {
+//     [index: string]: string
+// }
+
+
+// export abstract class ProductProfileViewModel {
+
+//     // public props: ValueMapping[] = [];
+
+//     static test(): ValueMapping[] {
+//     }
+// }
 type LoaderData = {
     customer: any;
     products: { [key: string]: Product };
     profile: {
-        aggregate_products: ProductProfile[],
+        aggregate_products: { [key: string]: ProductProfile },
         next_cart: CartItem[],
         orders_profile: OrdersProfile
     };
@@ -63,6 +78,7 @@ export const loader: LoaderFunction = async ({ params }) => {
 
 export default function ProfileRoute() {
     const { customer, products, profile } = useLoaderData() as LoaderData;
+    console.log(profile.aggregate_products)
     const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
     // const transition = useTransition()
 
@@ -79,7 +95,10 @@ export default function ProfileRoute() {
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
                 {profile.next_cart.map((cartItem) => (
                     <div key={cartItem.product_id}>
-                        <CartItemView cartItem={cartItem} product={products[cartItem.product_id]} />
+                        <CartItemView
+                            cartItem={cartItem}
+                            product={products[cartItem.product_id]}
+                            productProfile={profile.aggregate_products[cartItem.product_id]} />
                     </div>
                 ))}
             </div>
@@ -107,7 +126,7 @@ export default function ProfileRoute() {
 
             <h2 className="my-6 text-l font-bold">Products {customer.first_name} purchase</h2>
 
-            {profile.aggregate_products.length == 0 ? (
+            {Object.keys(profile.aggregate_products).length == 0 ? (
                 <h1>No orders for this customers.</h1>
             ) : (
                 <table className="table-auto">
@@ -123,15 +142,15 @@ export default function ProfileRoute() {
                         </tr>
                     </thead>
                     <tbody>
-                        {profile.aggregate_products.map((product: ProductProfile) => (
-                            <tr key={product.product_id}>
-                                <td>{product.product_id}</td>
-                                <td>{product["%"]}% (from all orders)</td>
-                                <td className="text-center">{product.name}</td>
-                                <td>{product.min} {product.unit}</td>
-                                <td>{product.max} {product.unit}</td>
-                                <td>{product.mean.toFixed(2)} {product.unit}</td>
-                                {<td><img className="object-cover h-20" src={products[product.product_id]?.image ?? placeholder} alt={product.name}></img></td>}
+                        {Object.keys(profile.aggregate_products).map((key, index) => (
+                            <tr key={index}>
+                                <td>{profile.aggregate_products[key].product_id}</td>
+                                <td>{profile.aggregate_products[key]["%"]}% (from all orders)</td>
+                                <td className="text-center">{profile.aggregate_products[key].name}</td>
+                                <td>{profile.aggregate_products[key].min} {profile.aggregate_products[key].unit}</td>
+                                <td>{profile.aggregate_products[key].max} {profile.aggregate_products[key].unit}</td>
+                                <td>{profile.aggregate_products[key].mean.toFixed(2)} {profile.aggregate_products[key].unit}</td>
+                                {<td><img className="object-cover h-20" src={products[key]?.image ?? placeholder} alt={products[key].name}></img></td>}
                             </tr>
                         ))}
                     </tbody>
@@ -165,24 +184,37 @@ export function CatchBoundary() {
 }
 
 
-function CartItemView({ cartItem, product }: { cartItem: CartItem, product: Product }) {
+function CartItemView({ cartItem, product, productProfile }: { cartItem: CartItem, product: Product, productProfile: ProductProfile }) {
     const delta: number = cartItem.product_unit == 'unit' ? 1 : 0.5
     const unit_string = cartItem.product_unit == 'unit' ? 'יח׳' : 'ק״ג'
     const [quantityString, setQuantityString] = useState(`${unit_string} ${cartItem.quantity}`);
+    const [showInfo, setShowInfo] = useState(false);
+    // const productProfileView = ProductProfileViewModel.test()
 
     function updateQuantity(value: number) {
-        cartItem.quantity = Math.min(0, cartItem.quantity + value)
+        cartItem.quantity = Math.max(0, cartItem.quantity + value)
         setQuantityString(`${unit_string} ${cartItem.quantity}`)
     }
+
+    function productProfileView(profile: ProductProfile) {
+        return [
+            { 'key': '% from all orders', 'value': profile["%"].toString() },
+            { 'key': 'min quantitiy', 'value': profile.min.toString() },
+            { 'key': 'max quantitiy', 'value': profile.max.toString() },
+            { 'key': 'mean', 'value': profile.mean.toFixed(2).toString() },
+            { 'key': 'variance', 'value': profile.var.toFixed(2).toString() },
+            { 'key': 'unit', 'value': profile.unit },
+        ]
+    }
     return (
-        <div>
+        <Box sx={{ height: '100%' }}>
             <Stack spacing={0} direction="column" alignItems="center">
                 <img className="object-cover h-40"
                     src={product?.image ?? placeholder}
                     alt={cartItem.name}></img>
                 <Box sx={{ fontWeight: 'bold', m: 1 }} textAlign='center'>
-                    <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><QueryStatsIcon /></IconButton>
-                    {cartItem.name} {cartItem.product_id}
+                    <IconButton color="success" aria-label="minus 1" onClick={() => setShowInfo(!showInfo)}><QueryStatsIcon /></IconButton>
+                    {cartItem.name}&nbsp;{cartItem.product_id}
                 </Box>
                 <Box sx={{ fontWeight: 'light', m: 1 }}>{product?.weight_type} / ֿ{product?.price}</Box>
 
@@ -191,6 +223,24 @@ function CartItemView({ cartItem, product }: { cartItem: CartItem, product: Prod
                     <Input readOnly value={quantityString} inputProps={{ min: 0, style: { textAlign: 'center' } }} />
                     <IconButton color="success" aria-label="plus 1" onClick={() => updateQuantity(+delta)}><AddIcon /></IconButton>
                 </Stack>
+                {showInfo == true ? (
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 100 }} aria-label="simple table">
+                            <TableHead />
+                            <TableBody>
+                                {productProfileView(productProfile).map((prop) => (
+                                    <TableRow key={prop['key']} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                        <TableCell component="th" scope="row">{prop['key']}</TableCell>
+                                        <TableCell align="right">{prop['value']}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+
+                ) : (<div></div>)
+                }
             </Stack>
-        </div>)
+        </Box>
+    )
 }
