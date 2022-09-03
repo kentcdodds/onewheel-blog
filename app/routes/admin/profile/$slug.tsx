@@ -27,8 +27,8 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import AdminError from "../error";
 import Box from "@mui/system/Box";
-import { LazyLoadImage, trackWindowScroll }
-    from 'react-lazy-load-image-component';
+// import { LazyLoadImage, trackWindowScroll }
+//     from 'react-lazy-load-image-component';
 import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
