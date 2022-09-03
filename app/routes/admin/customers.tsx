@@ -121,12 +121,12 @@ export default function Customers() {
                     </thead>
                     <tbody>
                         {customers.map((customer) => (
-                            <tr key={customer.customer_id}>
-                                <td>{customer.customer_id}</td>
+                            <tr key={customer.customerId}>
+                                <td>{customer.customerId}</td>
                                 <td>{customer.email}</td>
                                 <td>{customer.mobile}</td>
                                 <td>{customer.firstName} {customer.lastName}</td>
-                                <td><Link to={`/admin/profile/${customer.customer_id}`} className="text-blue-600">Profile</Link></td>
+                                <td><Link to={`/admin/profile/${customer.customerId}`} className="text-blue-600">Profile</Link></td>
                             </tr>
                         ))}
                     </tbody>

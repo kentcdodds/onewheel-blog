@@ -30,7 +30,7 @@ export async function createCustomer(customer: any) {
   console.log(customer)
     return await prisma.customer.create({
       data: {
-        customer_id: customer.id,
+        customerId: customer.id,
         email: customer.email,
         mobile: customer.billing?.phone,
         firstName: customer.billing?.first_name,
