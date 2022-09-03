@@ -7,6 +7,31 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model OrderSuggestion {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer   Customer @relation(fields: [customerId], references: [customerId])
+  customerId Int      @unique
+
+  cartItems CartItem[]
+}
+
+model CartItem {
+  id        String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  productId String @unique @db.VarChar(128)
+  name      String @db.VarChar(128)
+  unit_type String @db.VarChar(64)
+  quantity  Float
+  
+  order   OrderSuggestion @relation(fields: [orderId], references: [id])
+  orderId String
+}
+
 model CarmelaProduct {
   id          String   @id @unique @db.VarChar(128)
   name        String   @db.VarChar(128)
@@ -22,9 +47,9 @@ model CarmelaProduct {
   weight_type String?
   salePrice   String?
   instock     Boolean
-  categories Json
+  categories  Json
   related_ids String[]
-  status String
+  status      String
 }
 
 model Message {
@@ -64,11 +89,11 @@ model User {
   updatedAt DateTime @updatedAt
 
   password Password?
-  
+
   mobile    String    @unique @db.VarChar(16)
   firstName String    @db.VarChar(64)
-  lastName String?    @db.VarChar(64)
-  messages   Message[]
+  lastName  String?   @db.VarChar(64)
+  messages  Message[]
 }
 
 model Password {
@@ -79,10 +104,12 @@ model Password {
 }
 
 model Customer {
-    id    String @id @default(cuid())
-    customer_id    Int @unique
-    email String @unique
-    mobile String @unique
-    firstName String
-    lastName String
+  id         String @id @default(cuid())
+  customerId Int    @unique
+  email      String @unique
+  mobile     String @unique
+  firstName  String
+  lastName   String
+
+  orderSuggestions OrderSuggestion[]
 }
