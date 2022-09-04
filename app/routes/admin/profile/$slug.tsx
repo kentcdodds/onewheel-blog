@@ -30,7 +30,7 @@ import Box from "@mui/system/Box";
 // import { LazyLoadImage, trackWindowScroll }
 //     from 'react-lazy-load-image-component';
 import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
-import { CartItem, createOrder, getOrderForProfile, OrderSuggestion } from "~/models/orders_suggestions.server";
+import { CartItem, createOrder, getOrderForProfile, OrderSuggestion, updateCartItem } from "~/models/orders_suggestions.server";
 import { profile } from "console";
 import { DeleteForever } from "@mui/icons-material";
 import BeenhereIcon from '@mui/icons-material/Beenhere';
@@ -53,42 +53,9 @@ type LoaderData = {
 //     };
 // }
 
-export const action: ActionFunction = async ({ request }) => {
-    const formData = await request.formData();
-    
-    console.log(formData)
-    // const email = formData.get("email");
-
-    // if (!validateEmail(email)) {
-    //     return json<ActionData>(
-    //         { errors: { email: "Email is invalid" } },
-    //         { status: 400 }
-    //     );
-    // }
-
-    // if (await getCustomer(email) != undefined) {
-    //     return json<ActionData>(
-    //         { errors: { email: "Customer was already added" } },
-    //         { status: 400 }
-    //     );
-    // }
-
-
-    // const customers = await searchCustomer(email)
-
-    // if (!customers || customers.length == 0) {
-    //     return json<ActionData>(
-    //         { errors: { email: `Invalid customer for email ${email}` } },
-    //         { status: 400 }
-    //     );
-    // }
-
-    
-    // await createCustomer(customers[0]);
-    // return redirect('admin/customers');
-};
 
 export const loader: LoaderFunction = async ({ params }) => {
+    console.log('inside loader')
     const { slug } = params;
     invariant(slug, "slug is required");
     const profileData = await getProfile(slug);
@@ -98,7 +65,7 @@ export const loader: LoaderFunction = async ({ params }) => {
     }
 
 
-    const order = await getOrderForProfile(profileData.customer, 
+    const order = await getOrderForProfile(profileData.customer.id, 
         profileData.profile.next_cart, 
         parseISO(profileData.profile.orders_profile.next_order_date))
         
@@ -119,7 +86,8 @@ export default function ProfileRoute() {
     const profile = data.profile
     const products = data.products
     const customer = data.order?.customer;
-    
+    data.order?.cartItems.sort((a, b) => profile.aggregate_products[b.product_id]["%"] - profile.aggregate_products[a.product_id]["%"]);
+
     const [order, setOrder] = useState(data.order)
     const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
     
@@ -263,6 +231,17 @@ export function CatchBoundary() {
 }
 
 
+export const action: ActionFunction = async ({ request }) => {
+    const formData = await request.formData();    
+    const cartItemId = formData.get("cartItemId")?.toString() ?? "";
+    const quantitiy = Number(formData.get("quantitiy"));
+
+    const item = await updateCartItem(cartItemId, quantitiy)
+    console.log(item)
+    return null
+};
+
+
 function CartItemView({ cartItem, product, productProfile }: { cartItem: CartItem, product: Product, productProfile: ProductProfile }) {
     const delta: number = cartItem.product_unit == 'unit' ? 1 : 0.5
     const unit_string = cartItem.product_unit == 'unit' ? 'יח׳' : 'ק״ג'
@@ -270,9 +249,19 @@ function CartItemView({ cartItem, product, productProfile }: { cartItem: CartIte
     const [showInfo, setShowInfo] = useState(false);
     // const productProfileView = ProductProfileViewModel.test()
 
+    const fetcher = useFetcher()
     function updateQuantity(value: number) {
         cartItem.quantity = Math.max(0, cartItem.quantity + value)
         setQuantityString(`${unit_string} ${cartItem.quantity}`)
+        fetcher.submit(
+            { 
+                cartItemId: cartItem.id,
+                quantitiy: cartItem.quantity.toString()
+            }, 
+            {
+                method: 'post'
+            }
+        );
     }
 
     function productProfileView(profile: ProductProfile) {
@@ -297,11 +286,13 @@ function CartItemView({ cartItem, product, productProfile }: { cartItem: CartIte
                 </Box>
                 <Box sx={{ fontWeight: 'light', m: 1 }}>{product?.weight_type} / ֿ{product?.price}</Box>
 
-                <Stack spacing={1} direction="row" alignItems={"center"}>
-                    <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><RemoveIcon /></IconButton>
-                    <Input readOnly value={quantityString} inputProps={{ min: 0, style: { textAlign: 'center' } }} />
-                    <IconButton color="success" aria-label="plus 1" onClick={() => updateQuantity(+delta)}><AddIcon /></IconButton>
-                </Stack>
+                <fetcher.Form method='post'>
+                    <Stack spacing={1} direction="row" alignItems={"center"}>
+                        <IconButton color="success" aria-label="minus 1" onClick={() => updateQuantity(-delta)}><RemoveIcon /></IconButton>
+                        <Input readOnly value={quantityString} inputProps={{ min: 0, style: { textAlign: 'center' } }} />
+                        <IconButton color="success" aria-label="plus 1" onClick={() => updateQuantity(+delta)}><AddIcon /></IconButton>
+                    </Stack>
+                </fetcher.Form>
                 {showInfo == true ? (
                     <TableContainer component={Paper}>
                         <Table sx={{ minWidth: 100 }} aria-label="simple table">
@@ -323,6 +314,7 @@ function CartItemView({ cartItem, product, productProfile }: { cartItem: CartIte
         </Box>
     )
 }
+
 
 
 // interface ActionData {

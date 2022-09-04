@@ -1,4 +1,5 @@
 import type { CartItem, Customer, OrderSuggestion, Prisma } from "@prisma/client";
+import invariant from "tiny-invariant";
 import { prisma } from "~/db.server";
 
 type OrderSuggestionFullPayload = Prisma.OrderSuggestionGetPayload<{
@@ -19,29 +20,31 @@ class OrderSuggestionError extends Error {
   }
 }
 
-export async function getOrderForProfile(customer: Customer, cartItems: CartItem[], suggestedDate: Date) {
+export async function getOrderForProfile(customerId: number, cartItems: CartItem[], suggestedDate: Date) {
+  console.log('getOrderForProfile')
   try {
-    return await createOrder(customer, cartItems, suggestedDate);
+    return await createOrder(customerId, cartItems, suggestedDate);
   } catch (e) {
+    console.log(e)
     if (e instanceof OrderSuggestionError) {
       return e.order
     }
   }
 }
 
-export async function createOrder(customer: Customer, cartItems: CartItem[], suggestedDate: Date) {
-  const activeOrder = await getActiveOrder(customer.mobile)
+export async function createOrder(customerId: number, cartItems: CartItem[], suggestedDate: Date) {
+  const activeOrder = await getActiveOrder(customerId)
   if (activeOrder) {
     throw new OrderSuggestionError(`User already have an active order ${activeOrder.id}`, activeOrder)
   }
-
+  console.log('createOrder')
   return await prisma.orderSuggestion.create({
     data: {
       suggestedDate,
       isActive: true,
       customer: {
         connect: {
-          email: customer.email
+          customerId: customerId
         }
       },
       cartItems: {
@@ -68,12 +71,12 @@ export async function deleteOrder(id: string) {
   });
 }
 
-export async function getActiveOrder(mobile: string) {
+export async function getActiveOrder(customerId: number) {
   return await prisma.orderSuggestion.findFirst({
     where: {
       customer: {
-        mobile: {
-          equals: mobile
+        customerId: {
+          equals: customerId
         }
       },
       isActive: {
@@ -83,6 +86,17 @@ export async function getActiveOrder(mobile: string) {
     include: {
       cartItems: true,
       customer: true
+    }
+  });
+}
+
+export async function updateCartItem(id: string, quantity: number) {
+  return await prisma.cartItem.update({
+    where: {
+      id
+    },
+    data: {
+      quantity: quantity
     }
   });
 }
