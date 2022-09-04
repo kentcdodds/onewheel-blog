@@ -8,7 +8,7 @@ type OrderSuggestionFullPayload = Prisma.OrderSuggestionGetPayload<{
   }
 }>
 
-export type { OrderSuggestionFullPayload as OrderSuggestion }
+export type { OrderSuggestionFullPayload as OrderSuggestion , CartItem}
 
 class OrderSuggestionError extends Error {
   public order: OrderSuggestionFullPayload;

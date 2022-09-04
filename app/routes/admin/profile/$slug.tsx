@@ -1,7 +1,7 @@
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useCatch, useLoaderData, useParams, useTransition } from "@remix-run/react";
-import { CartItem, getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
+import { Form, useCatch, useFetcher, useLoaderData, useParams, useTransition } from "@remix-run/react";
+import { getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
 import { getProduct, Product } from "~/models/product.server";
 import { useState } from "react";
@@ -30,8 +30,10 @@ import Box from "@mui/system/Box";
 // import { LazyLoadImage, trackWindowScroll }
 //     from 'react-lazy-load-image-component';
 import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
-import { createOrder, getOrderForProfile, OrderSuggestion } from "~/models/orders_suggestions.server";
+import { CartItem, createOrder, getOrderForProfile, OrderSuggestion } from "~/models/orders_suggestions.server";
 import { profile } from "console";
+import { DeleteForever } from "@mui/icons-material";
+import BeenhereIcon from '@mui/icons-material/Beenhere';
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 dayjs.locale('en-il')
@@ -43,6 +45,47 @@ type LoaderData = {
         orders_profile: OrdersProfile
     };
     order?: OrderSuggestion;
+};
+
+// interface ActionData {
+//     errors?: {
+//         email?: string;
+//     };
+// }
+
+export const action: ActionFunction = async ({ request }) => {
+    const formData = await request.formData();
+    
+    console.log(formData)
+    // const email = formData.get("email");
+
+    // if (!validateEmail(email)) {
+    //     return json<ActionData>(
+    //         { errors: { email: "Email is invalid" } },
+    //         { status: 400 }
+    //     );
+    // }
+
+    // if (await getCustomer(email) != undefined) {
+    //     return json<ActionData>(
+    //         { errors: { email: "Customer was already added" } },
+    //         { status: 400 }
+    //     );
+    // }
+
+
+    // const customers = await searchCustomer(email)
+
+    // if (!customers || customers.length == 0) {
+    //     return json<ActionData>(
+    //         { errors: { email: `Invalid customer for email ${email}` } },
+    //         { status: 400 }
+    //     );
+    // }
+
+    
+    // await createCustomer(customers[0]);
+    // return redirect('admin/customers');
 };
 
 export const loader: LoaderFunction = async ({ params }) => {
@@ -72,19 +115,51 @@ export const loader: LoaderFunction = async ({ params }) => {
 // }
 
 export default function ProfileRoute() {
-    const { products, profile, order } = useLoaderData() as LoaderData;
-    const customer = order?.customer;
+    const data = useLoaderData() as LoaderData;
+    const profile = data.profile
+    const products = data.products
+    const customer = data.order?.customer;
+    
+    const [order, setOrder] = useState(data.order)
     const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
+    
+    const fetcher = useFetcher();
+
     // const transition = useTransition()
 
     // if(transition.state === "loading") {
     //     return <div>Loading...</div>
     // }
 
+    // function SomeComponent() {
+    //     const fetcher = useFetcher();
+      
+    //     // trigger the fetch with these
+    //     <fetcher.Form {...formOptions} />;
+      
+    //     useEffect(() => {
+    //       fetcher.submit(order, options);
+    //       fetcher.load(href);
+    //     }, [fetcher]);
+      
+    //     // build UI with these
+    //     fetcher.state;
+    //     fetcher.type;
+    //     fetcher.submission;
+    //     fetcher.data;
+    // }
+
+    // const approveOrder = () => {
+    //     fetcher.submit(
+    //         { some: 'json json' },
+    //         { method: "post" }
+    //     );
+    // }
+
     return (
         <main className="mx-auto max-w-4xl">
             <h1 className="my-6 text-center text-3xl">{customer?.email}</h1>
-            <h2 className="my-6 text-center text-2xl border-b-2">{customer?.firstName} {customer?.lastName} {customer.mobile}</h2>
+            <h2 className="my-6 text-center text-2xl border-b-2">{customer?.firstName} {customer?.lastName} {customer?.mobile}</h2>
 
             <h2 className="my-6 text-2xl">Next cart recommendation:</h2>
             <p>Order id {order?.id}</p>
@@ -108,11 +183,19 @@ export default function ProfileRoute() {
                 />
             </LocalizationProvider>
             <div className="flex justify-center">
-                <Form method="post" className="space-y-6">
+                {/* <Form method="post" className="space-y-6">
                     <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
                         Approve Recommendation
                     </button>
-                </Form>
+                </Form> */}
+                <fetcher.Form method='post'>
+                    <Button variant="contained" color="error" value={order?.id} startIcon={<DeleteForever />}>
+                        Delete Suggestion
+                    </Button>
+                    <Button variant="contained" color="success" value={order?.id} startIcon={<BeenhereIcon />}>
+                        Save Suggestion
+                    </Button>
+                </fetcher.Form>
             </div>
             <h2 className="my-6 text-2xl">Profile</h2>
             {profile.orders_profile?.plots.map((plot_url: string) => (
@@ -122,7 +205,7 @@ export default function ProfileRoute() {
 
             <h2 className="my-6 text-l font-bold">Products {customer?.firstName} purchase</h2>
 
-            {Object.keys(profile.aggregate_products).length == 0 ? (
+            {/* {Object.keys(profile.aggregate_products).length == 0 ? (
                 <h1>No orders for this customers.</h1>
             ) : (
                 <table className="table-auto">
@@ -151,7 +234,7 @@ export default function ProfileRoute() {
                         ))}
                     </tbody>
                 </table>
-            )}
+            )} */}
         </main>
     );
 }
