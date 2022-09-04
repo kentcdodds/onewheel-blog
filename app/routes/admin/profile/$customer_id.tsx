@@ -118,10 +118,8 @@ export default function ProfileRoute() {
   data.order?.cartItems.sort((a, b) => profile.aggregate_products[b.product_id]["%"] - profile.aggregate_products[a.product_id]["%"]);
 
   const [order, setOrder] = useState(data.order)
-  const [orderModified, setOrderModified] = useState(parseISO(order?.createdAt) != parseISO(order?.updatedAt))
+  // const [orderModified, setOrderModified] = useState(order && (parseISO(order.updatedAt).setSeconds(0,0) != parseISO(order.createdAt).setSeconds(0,0)))
   const [nextOrderDate, setNextOrderDate] = useState(order?.suggestedDate);
-  console.log(order?.id)
-  console.log(orderModified)
   const fetcher = useFetcher();
 
   useEffect(() => {
@@ -144,7 +142,7 @@ export default function ProfileRoute() {
   }
 
   function orderAction(id: string, action: string) {
-    setOrder(null)
+    setOrder(undefined)
     fetcher.submit(
       {
         orderId: id,
@@ -185,11 +183,10 @@ export default function ProfileRoute() {
           </LocalizationProvider>
           <div className="flex justify-center">
             <fetcher.Form method='post' action='/search'>
-              {orderModified ? (
-                <Button variant="contained" color="error" value={order?.id} startIcon={<DeleteForever />} onClick={() => { orderAction(order?.id!!, ACTION_RESET_ORDER) }}>
-                  Reset Suggestion
-                </Button>
-              ) : (<div></div>)}
+              <Button variant="contained" color="error" value={order?.id} startIcon={<DeleteForever />} onClick={() => { orderAction(order?.id!!, ACTION_RESET_ORDER) }}>
+                Reset Suggestion
+              </Button>
+
               <Button variant="contained" color="success" value={order?.id} startIcon={<BeenhereIcon />} onClick={() => { orderAction(order?.id!!, ACTION_APPROVE_ORDER) }}>
                 Save Suggestion
               </Button>
