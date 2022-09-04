@@ -30,13 +30,16 @@ import Box from "@mui/system/Box";
 // import { LazyLoadImage, trackWindowScroll }
 //     from 'react-lazy-load-image-component';
 import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
-import { CartItem, createOrder, getOrderForProfile, OrderSuggestion, updateCartItem } from "~/models/orders_suggestions.server";
+import { CartItem, createOrder, getOrderForProfile, OrderSuggestion, updateCartItem, updateOrderSuggestedDate } from "~/models/orders_suggestions.server";
 import { profile } from "console";
 import { DeleteForever } from "@mui/icons-material";
 import BeenhereIcon from '@mui/icons-material/Beenhere';
 
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 dayjs.locale('en-il')
+
+const ACTION_UPDATE_CART_ITEM = 'ACTION_UPDATE_CART_ITEM';
+const ACTION_UPDATE_ORDER_SUGGESTED_DATE = 'ACTION_UPDATE_ORDER_SUGGESTED_DATE';
 
 type LoaderData = {
     products: { [key: string]: Product };
@@ -89,10 +92,23 @@ export default function ProfileRoute() {
     data.order?.cartItems.sort((a, b) => profile.aggregate_products[b.product_id]["%"] - profile.aggregate_products[a.product_id]["%"]);
 
     const [order, setOrder] = useState(data.order)
-    const [nextOrderDate, setNextOrderDate] = useState(parseISO(profile.orders_profile.next_order_date));
+    const [nextOrderDate, setNextOrderDate] = useState(order?.suggestedDate);
     
-    const fetcher = useFetcher();
+    const fetcher = useFetcher(); 
 
+    function updateOrderSuggestedDate(newDate: Date) {
+        newDate && setNextOrderDate(newDate)
+        fetcher.submit(
+            { 
+                orderId: order?.id ?? '',
+                date: newDate.toISOString(),
+                _action: ACTION_UPDATE_ORDER_SUGGESTED_DATE
+            }, 
+            {
+                method: 'post'
+            }
+        );
+    }
     // const transition = useTransition()
 
     // if(transition.state === "loading") {
@@ -146,7 +162,7 @@ export default function ProfileRoute() {
                 <DatePicker
                     label="Next order suggestion"
                     value={nextOrderDate}
-                    onChange={newDate => { newDate && setNextOrderDate(newDate) }}
+                    onChange={newDate => { newDate && updateOrderSuggestedDate(newDate) }}
                     renderInput={(params) => <TextField {...params} />}
                 />
             </LocalizationProvider>
@@ -232,12 +248,22 @@ export function CatchBoundary() {
 
 
 export const action: ActionFunction = async ({ request }) => {
-    const formData = await request.formData();    
-    const cartItemId = formData.get("cartItemId")?.toString() ?? "";
-    const quantitiy = Number(formData.get("quantitiy"));
-
-    const item = await updateCartItem(cartItemId, quantitiy)
-    console.log(item)
+    const formData = await request.formData(); 
+    const action = formData.get('_action');
+    console.log(`action: ${action}`);
+    if (action === ACTION_UPDATE_CART_ITEM) {
+        const cartItemId = formData.get("cartItemId")?.toString() ?? "";
+        const quantitiy = Number(formData.get("quantitiy"));
+    
+        const item = await updateCartItem(cartItemId, quantitiy)
+        console.log(item)
+    } else if (action === ACTION_UPDATE_ORDER_SUGGESTED_DATE) {
+        const orderId = formData.get("orderId")?.toString() ?? "";
+        const date = parseISO(formData.get("date")?.toString() ?? "")
+        const order = await updateOrderSuggestedDate(orderId, date)
+        console.log(order)
+    }
+    
     return null
 };
 
@@ -256,7 +282,8 @@ function CartItemView({ cartItem, product, productProfile }: { cartItem: CartIte
         fetcher.submit(
             { 
                 cartItemId: cartItem.id,
-                quantitiy: cartItem.quantity.toString()
+                quantitiy: cartItem.quantity.toString(),
+                _action: ACTION_UPDATE_CART_ITEM
             }, 
             {
                 method: 'post'

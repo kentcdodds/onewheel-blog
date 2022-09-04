@@ -25,9 +25,10 @@ export async function getOrderForProfile(customerId: number, cartItems: CartItem
   try {
     return await createOrder(customerId, cartItems, suggestedDate);
   } catch (e) {
-    console.log(e)
     if (e instanceof OrderSuggestionError) {
       return e.order
+    } else {
+      console.log(e)
     }
   }
 }
@@ -97,6 +98,17 @@ export async function updateCartItem(id: string, quantity: number) {
     },
     data: {
       quantity: quantity
+    }
+  });
+}
+
+export async function updateOrderSuggestedDate(id: string, suggestedDate: Date) {
+  return await prisma.orderSuggestion.update({
+    where: {
+      id
+    },
+    data: {
+      suggestedDate
     }
   });
 }
