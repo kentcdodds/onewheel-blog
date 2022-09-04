@@ -1,4 +1,4 @@
-import type { CartItem, Customer, OrderSuggestion, Prisma } from "@prisma/client";
+import { CartItem, Customer, OrderSuggestion, OrderSuggestionStatus, Prisma } from "@prisma/client";
 import invariant from "tiny-invariant";
 import { prisma } from "~/db.server";
 
@@ -34,15 +34,15 @@ export async function getOrderForProfile(customerId: number, cartItems: CartItem
 }
 
 export async function createOrder(customerId: number, cartItems: CartItem[], suggestedDate: Date) {
-  const activeOrder = await getActiveOrder(customerId)
-  if (activeOrder) {
-    throw new OrderSuggestionError(`User already have an active order ${activeOrder.id}`, activeOrder)
+  const order = await getInReviewOrder(customerId)
+  if (order) {
+    throw new OrderSuggestionError(`User already have an active order in review ${order.id}`, order)
   }
   console.log('createOrder')
   return await prisma.orderSuggestion.create({
     data: {
       suggestedDate,
-      isActive: true,
+      status: OrderSuggestionStatus.InReview,
       customer: {
         connect: {
           customerId: customerId
@@ -72,7 +72,7 @@ export async function deleteOrder(id: string) {
   });
 }
 
-export async function getActiveOrder(customerId: number) {
+export async function getInReviewOrder(customerId: number) {
   return await prisma.orderSuggestion.findFirst({
     where: {
       customer: {
@@ -80,8 +80,8 @@ export async function getActiveOrder(customerId: number) {
           equals: customerId
         }
       },
-      isActive: {
-        equals: true
+      status: {
+        equals: OrderSuggestionStatus.InReview
       }
     },
     include: {
@@ -102,6 +102,7 @@ export async function updateCartItem(id: string, quantity: number) {
   });
 }
 
+
 export async function updateOrderSuggestedDate(id: string, suggestedDate: Date) {
   return await prisma.orderSuggestion.update({
     where: {
@@ -109,6 +110,17 @@ export async function updateOrderSuggestedDate(id: string, suggestedDate: Date) 
     },
     data: {
       suggestedDate
+    }
+  });
+}
+
+export async function stashOrder(id: string) {
+  return await prisma.orderSuggestion.update({
+    where: {
+      id
+    },
+    data: {
+      status: OrderSuggestionStatus.Stashed
     }
   });
 }

@@ -1,10 +1,10 @@
 import { ActionFunction, LoaderFunction, redirect } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, useCatch, useFetcher, useLoaderData, useParams, useTransition } from "@remix-run/react";
+import { Form, useActionData, useCatch, useFetcher, useLoaderData, useParams, useTransition } from "@remix-run/react";
 import { getProfile, OrdersProfile, type ProductProfile } from "~/models/profile.server";
 import invariant from "tiny-invariant";
 import { getProduct, Product } from "~/models/product.server";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import AddIcon from '@mui/icons-material/Add';
@@ -30,7 +30,7 @@ import Box from "@mui/system/Box";
 // import { LazyLoadImage, trackWindowScroll }
 //     from 'react-lazy-load-image-component';
 import { Paper, Table, TableContainer, TableHead, TableRow, TableCell, TableBody } from "@mui/material";
-import { CartItem, createOrder, getOrderForProfile, OrderSuggestion, updateCartItem, updateOrderSuggestedDate } from "~/models/orders_suggestions.server";
+import { CartItem, createOrder, deleteOrder, getOrderForProfile, OrderSuggestion, stashOrder, updateCartItem, updateOrderSuggestedDate } from "~/models/orders_suggestions.server";
 import { profile } from "console";
 import { DeleteForever } from "@mui/icons-material";
 import BeenhereIcon from '@mui/icons-material/Beenhere';
@@ -38,9 +38,9 @@ import BeenhereIcon from '@mui/icons-material/Beenhere';
 const placeholder = 'https://placeholder.pics/svg/300/DEDEDE/555555/Missing'
 dayjs.locale('en-il')
 
-const ACTION_UPDATE_CART_ITEM = 'ACTION_UPDATE_CART_ITEM';
-const ACTION_UPDATE_ORDER_SUGGESTED_DATE = 'ACTION_UPDATE_ORDER_SUGGESTED_DATE';
-
+/////////////////////////////////////////////////////////////////////
+//  Loader
+/////////////////////////////////////////////////////////////////////
 type LoaderData = {
     products: { [key: string]: Product };
     profile: {
@@ -49,13 +49,6 @@ type LoaderData = {
     };
     order?: OrderSuggestion;
 };
-
-// interface ActionData {
-//     errors?: {
-//         email?: string;
-//     };
-// }
-
 
 export const loader: LoaderFunction = async ({ params }) => {
     console.log('inside loader')
@@ -80,27 +73,75 @@ export const loader: LoaderFunction = async ({ params }) => {
     });
 };
 
+/////////////////////////////////////////////////////////////////////
+//  Action
+/////////////////////////////////////////////////////////////////////
+const ACTION_UPDATE_CART_ITEM = 'ACTION_UPDATE_CART_ITEM';
+const ACTION_UPDATE_ORDER_SUGGESTED_DATE = 'ACTION_UPDATE_ORDER_SUGGESTED_DATE';
+const ACTION_RESET_ORDER = 'ACTION_RESET_ORDER';
+const ACTION_APPROVE_ORDER = 'ACTION_APPROVE_ORDER';
+
+interface ActionData {
+    errors?: string,
+    action: string,
+}
+
+export const action: ActionFunction = async ({ request }) => {
+    const formData = await request.formData(); 
+    const action = formData.get('_action');
+    
+    if (action === ACTION_UPDATE_CART_ITEM) {
+        const cartItemId = formData.get("cartItemId")?.toString() ?? "";
+        const quantitiy = Number(formData.get("quantitiy"));
+        const item = await updateCartItem(cartItemId, quantitiy)
+    } else if (action === ACTION_UPDATE_ORDER_SUGGESTED_DATE) {
+        const orderId = formData.get("orderId")?.toString() ?? "";
+        const date = parseISO(formData.get("date")?.toString() ?? "")
+        const order = await updateOrderSuggestedDate(orderId, date)
+        console.log(order)
+    } else if (action === ACTION_RESET_ORDER) {
+        const orderId = formData.get("orderId")?.toString() ?? "";
+        await stashOrder(orderId)
+    } else if (action === ACTION_APPROVE_ORDER) {
+        const orderId = formData.get("orderId")?.toString() ?? "";
+        // await stashOrder(orderId)
+    }
+    
+    return null
+};
+
+
 // function onClick(customer, orders) {
 //     //do something
 // }
 
 export default function ProfileRoute() {
     const data = useLoaderData() as LoaderData;
+    const actionData = useActionData() as ActionData;
+    console.log(`action data ${actionData}`);
+    console.log(`order id ${data.order?.id}`)
     const profile = data.profile
     const products = data.products
-    const customer = data.order?.customer;
+    const customer = data.order?.customer!!;
     data.order?.cartItems.sort((a, b) => profile.aggregate_products[b.product_id]["%"] - profile.aggregate_products[a.product_id]["%"]);
 
     const [order, setOrder] = useState(data.order)
+    const [orderModified, setOrderModified] = useState(parseISO(order?.createdAt) != parseISO(order?.updatedAt))
     const [nextOrderDate, setNextOrderDate] = useState(order?.suggestedDate);
-    
+    console.log(order?.id)
+    console.log(orderModified)
     const fetcher = useFetcher(); 
-
+    
+    useEffect(() => {
+        if (!order) {
+            window.location.reload()
+        }        
+      });
     function updateOrderSuggestedDate(newDate: Date) {
         newDate && setNextOrderDate(newDate)
         fetcher.submit(
             { 
-                orderId: order?.id ?? '',
+                orderId: order?.id!!,
                 date: newDate.toISOString(),
                 _action: ACTION_UPDATE_ORDER_SUGGESTED_DATE
             }, 
@@ -109,42 +150,26 @@ export default function ProfileRoute() {
             }
         );
     }
-    // const transition = useTransition()
 
-    // if(transition.state === "loading") {
-    //     return <div>Loading...</div>
-    // }
-
-    // function SomeComponent() {
-    //     const fetcher = useFetcher();
-      
-    //     // trigger the fetch with these
-    //     <fetcher.Form {...formOptions} />;
-      
-    //     useEffect(() => {
-    //       fetcher.submit(order, options);
-    //       fetcher.load(href);
-    //     }, [fetcher]);
-      
-    //     // build UI with these
-    //     fetcher.state;
-    //     fetcher.type;
-    //     fetcher.submission;
-    //     fetcher.data;
-    // }
-
-    // const approveOrder = () => {
-    //     fetcher.submit(
-    //         { some: 'json json' },
-    //         { method: "post" }
-    //     );
-    // }
+    function orderAction(id: string, action: string) {
+        setOrder(null)
+        fetcher.submit(
+            { 
+                orderId: id,
+                _action: action
+            }, 
+            {
+                method: 'post'
+            }
+        );
+    }
 
     return (
-        <main className="mx-auto max-w-4xl">
-            <h1 className="my-6 text-center text-3xl">{customer?.email}</h1>
-            <h2 className="my-6 text-center text-2xl border-b-2">{customer?.firstName} {customer?.lastName} {customer?.mobile}</h2>
-
+        <main>
+            <h1 className="my-6 text-center text-3xl">{customer.email}</h1>
+            <h2 className="my-6 text-center text-2xl border-b-2">{customer.firstName} {customer.lastName} {customer.mobile}</h2>
+            {order ? (
+            <div>
             <h2 className="my-6 text-2xl">Next cart recommendation:</h2>
             <p>Order id {order?.id}</p>
             <div className="grid grid-cols-4 gap-4 mb-10 mt-4">
@@ -168,19 +193,29 @@ export default function ProfileRoute() {
             </LocalizationProvider>
             <div className="flex justify-center">
                 {/* <Form method="post" className="space-y-6">
-                    <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        Approve Recommendation
+                    <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" value='reset'>
+                        Reset Recommendation
                     </button>
                 </Form> */}
-                <fetcher.Form method='post'>
-                    <Button variant="contained" color="error" value={order?.id} startIcon={<DeleteForever />}>
-                        Delete Suggestion
+                <fetcher.Form method='post' action='/search'>
+                    {orderModified ? (
+                    <Button variant="contained" color="error" value={order?.id} startIcon={<DeleteForever />} onClick={() => {orderAction(order?.id!!, ACTION_RESET_ORDER)}}>
+                        Reset Suggestion
                     </Button>
-                    <Button variant="contained" color="success" value={order?.id} startIcon={<BeenhereIcon />}>
+                    ) : (<div></div>)}
+                    <Button variant="contained" color="success" value={order?.id} startIcon={<BeenhereIcon />} onClick={() => {orderAction(order?.id!!, ACTION_APPROVE_ORDER)}}>
                         Save Suggestion
                     </Button>
                 </fetcher.Form>
-            </div>
+            </div></div>
+            ) : (
+                <Stack spacing={5} direction="column" alignItems="center">
+                    <Box sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 2 }}>primary.main</Box>
+                    <Box sx={{ fontWeight: 'light', m: 1 }}>&nbsp;</Box>
+                    <Box sx={{ fontWeight: 'Medium', m: 1 , fontSize: 50, color: 'text.disabled'}}>Restoring Suggestion...</Box>
+                    <Box sx={{ fontWeight: 'light', m: 1 }}>&nbsp;</Box>
+                </Stack>
+            )}
             <h2 className="my-6 text-2xl">Profile</h2>
             {profile.orders_profile?.plots.map((plot_url: string) => (
                 <img key={plot_url} className="justify-center" src={plot_url} alt={plot_url}></img>
@@ -245,27 +280,6 @@ export function CatchBoundary() {
     }
     // throw new Error(`Unsupported thrown response status code: ${caught.status}`);
 }
-
-
-export const action: ActionFunction = async ({ request }) => {
-    const formData = await request.formData(); 
-    const action = formData.get('_action');
-    console.log(`action: ${action}`);
-    if (action === ACTION_UPDATE_CART_ITEM) {
-        const cartItemId = formData.get("cartItemId")?.toString() ?? "";
-        const quantitiy = Number(formData.get("quantitiy"));
-    
-        const item = await updateCartItem(cartItemId, quantitiy)
-        console.log(item)
-    } else if (action === ACTION_UPDATE_ORDER_SUGGESTED_DATE) {
-        const orderId = formData.get("orderId")?.toString() ?? "";
-        const date = parseISO(formData.get("date")?.toString() ?? "")
-        const order = await updateOrderSuggestedDate(orderId, date)
-        console.log(order)
-    }
-    
-    return null
-};
 
 
 function CartItemView({ cartItem, product, productProfile }: { cartItem: CartItem, product: Product, productProfile: ProductProfile }) {
@@ -344,11 +358,7 @@ function CartItemView({ cartItem, product, productProfile }: { cartItem: CartIte
 
 
 
-// interface ActionData {
-//     errors?: {
-//         email?: string;
-//     };
-// }
+
 
 // export const action: ActionFunction = async ({ request }) => {
 //     const formData = await request.formData();

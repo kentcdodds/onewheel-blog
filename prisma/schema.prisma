@@ -18,7 +18,16 @@ model OrderSuggestion {
 
   cartItems CartItem[]
 
-  isActive Boolean
+  status OrderSuggestionStatus
+}
+
+enum OrderSuggestionStatus {
+  InReview
+  Apprvoed
+  PendingBroadcast
+  Expired
+  Complete
+  Stashed
 }
 
 model CartItem {
