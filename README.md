@@ -80,8 +80,8 @@ Prior to your first deployment, you'll need to do a few things:
 - Create two apps on Fly, one for staging and one for production:
 
   ```sh
-  fly create onewheel-blog-fl0t
-  fly create onewheel-blog-fl0t-staging
+  fly apps create onewheel-blog-fl0t
+  fly apps create onewheel-blog-fl0t-staging
   ```
 
   - Initialize Git.
